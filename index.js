@@ -64,9 +64,17 @@ app.post("/payments/verify", (req, res) => {
     .digest("hex");
 
   if (expectedSignature === razorpay_signature) {
+    // ✅ SAVE PAYMENT (TEMP)
+    payments.push({
+      order_id: razorpay_order_id,
+      payment_id: razorpay_payment_id,
+      status: "success",
+      time: new Date().toISOString(),
+    });
+
     return res.json({
       success: true,
-      message: "Payment verified successfully",
+      message: "Payment verified & saved",
     });
   } else {
     return res.status(400).json({
@@ -76,3 +84,7 @@ app.post("/payments/verify", (req, res) => {
   }
 });
 
+const payments = []; // TEMP storage (step 4)
+app.get("/payments", (req, res) => {
+  res.json(payments);
+});
