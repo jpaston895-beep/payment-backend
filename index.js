@@ -1,3 +1,4 @@
+const payments = []; 
 const express = require("express");
 const cors = require("cors");
 const Razorpay = require("razorpay");
@@ -83,8 +84,6 @@ app.post("/payments/verify", (req, res) => {
     });
   }
 });
-
-const payments = []; // TEMP storage (step 4)
 app.get("/payments", (req, res) => {
   res.json(payments);
 });
