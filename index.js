@@ -1,55 +1,44 @@
-const payments = []; 
 const express = require("express");
-const cors = require("cors");
 const Razorpay = require("razorpay");
+const crypto = require("crypto");
+const cors = require("cors");
 
 const app = express();
 
-// ✅ middlewares (VERY IMPORTANT)
+// MIDDLEWARE (VERY IMPORTANT)
 app.use(cors());
 app.use(express.json());
 
-// ✅ Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
-});
-
-// ✅ test route
+// HEALTH CHECK
 app.get("/", (req, res) => {
   res.json({ status: "Backend is running" });
 });
 
-// ✅ CREATE ORDER ROUTE
+// RAZORPAY INSTANCE
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// CREATE ORDER
 app.post("/payments/create", async (req, res) => {
   try {
     const { amount } = req.body;
 
-    if (!amount) {
-      return res.status(400).json({ error: "Amount is required" });
-    }
-
     const order = await razorpay.orders.create({
-      amount: amount * 100, // convert to paise
+      amount: amount * 100, // rupees → paise
       currency: "INR",
-      receipt: "rcpt_" + Date.now()
+      receipt: "receipt_" + Date.now(),
     });
 
-    res.json({ order });
+    res.json(order);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: "Order creation failed" });
   }
 });
 
-// ✅ start server
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log("Server running on port", port);
-});
-const crypto = require("crypto");
-
-/* VERIFY PAYMENT */
+// VERIFY PAYMENT
 app.post("/payments/verify", (req, res) => {
   const {
     razorpay_order_id,
@@ -65,25 +54,21 @@ app.post("/payments/verify", (req, res) => {
     .digest("hex");
 
   if (expectedSignature === razorpay_signature) {
-    // ✅ SAVE PAYMENT (TEMP)
-    payments.push({
-      order_id: razorpay_order_id,
-      payment_id: razorpay_payment_id,
-      status: "success",
-      time: new Date().toISOString(),
-    });
-
     return res.json({
       success: true,
-      message: "Payment verified & saved",
+      message: "Payment verified successfully ✅",
     });
   } else {
     return res.status(400).json({
       success: false,
-      message: "Invalid signature",
+      message: "Payment verification failed ❌",
     });
   }
 });
-app.get("/payments", (req, res) => {
-  res.json(payments);
+
+// START SERVER (RENDER SAFE)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
+
