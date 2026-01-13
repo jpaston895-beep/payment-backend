@@ -45,6 +45,11 @@ app.post("/payments/verify", (req, res) => {
     razorpay_payment_id,
     razorpay_signature,
   } = req.body;
+ 
+  console.log("ORDER ID:", razorpay_order_id);
+  console.log("PAYMENT ID:", razorpay_payment_id);
+  console.log("SIGNATURE FROM FRONTEND:", razorpay_signature);
+  console.log("SECRET USED:", process.env.RAZORPAY_KEY_SECRET);
 
   const body = razorpay_order_id + "|" + razorpay_payment_id;
 
